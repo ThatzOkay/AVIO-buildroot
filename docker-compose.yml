@@ -1,0 +1,28 @@
+services:
+  bash: &base
+    build: .
+    image: avio-buildroot
+    volumes:
+      - .:/app
+      - dl:/app/buildroot/dl
+      - output:/app/buildroot/output
+    working_dir: /app/buildroot
+    command: bash
+
+  generate_image_donotuse: &generate_image
+    <<: *base
+    command: bash -x -c "make BR2_EXTERNAL=../avio_configs/ O=output/$${BOARD_NAME} $${BOARD_NAME}_defconfig && cd output/$${BOARD_NAME} && make && mkdir -p /app/images/ && cp images/sdcard.img /app/images/sdcard-$${BOARD_NAME}.img"
+
+  rpi4:
+    <<: *generate_image
+    environment:
+      - BOARD_NAME=raspberrypi4
+
+  rpi5:
+    <<: *generate_image
+    environment:
+      - BOARD_NAME=raspberrypi5
+
+volumes:
+  dl:
+  output:

@@ -1,0 +1,38 @@
+name: Build images
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: rpi4
+            board: raspberrypi4
+          - service: rpi5
+            board: raspberrypi5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache
+
+      - name: Build ${{ matrix.board }} image
+        run: docker compose run --rm ${{ matrix.service }}
+
+      - name: Upload ${{ matrix.board }} artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdcard-${{ matrix.board }}
+          path: images/sdcard-${{ matrix.board }}.img
+          if-no-files-found: error
