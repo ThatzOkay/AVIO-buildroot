@@ -35,6 +35,11 @@ jobs:
           restore-keys: |
             ccache-${{ matrix.board }}-
 
+      - name: Prepare bind-mounted directories
+        run: |
+          mkdir -p .ccache images
+          chmod 777 .ccache images
+
       - name: Build ${{ matrix.board }} image
         run: docker compose run --rm ${{ matrix.service }}
 
