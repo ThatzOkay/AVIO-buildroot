@@ -31,9 +31,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .ccache
-          key: ccache-${{ matrix.board }}-${{ github.run_id }}
+          key: ccache-v2-${{ matrix.board }}-${{ github.run_id }}
           restore-keys: |
-            ccache-${{ matrix.board }}-
+            ccache-v2-${{ matrix.board }}-
 
       - name: Prepare bind-mounted directories
         run: |
