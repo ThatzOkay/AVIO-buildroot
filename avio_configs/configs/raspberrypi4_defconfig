@@ -28,8 +28,12 @@ BR2_GLOBAL_PATCH_DIR="board/raspberrypi/patches $(BR2_EXTERNAL_AVIO_PATH)/patche
 BR2_DOWNLOAD_FORCE_CHECK_HASHES=y
 
 # Compiler cache (persisted/restored by the CI pipeline to cut build time)
+# Capped size + reduced parallelism to avoid memory pressure from WebKitGTK's
+# heavy unified-source compiles fighting ccache for RAM on CI runners
 BR2_CCACHE=y
 BR2_CCACHE_DIR="/app/.ccache"
+BR2_CCACHE_INITIAL_SETUP="-M 2G"
+BR2_JLEVEL=3
 
 # Enable compressed kernel module support
 BR2_PACKAGE_BUSYBOX_SHOW_OTHERS=y
