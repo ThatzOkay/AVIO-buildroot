@@ -27,6 +27,14 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache
 
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.board }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-${{ matrix.board }}-
+
       - name: Build ${{ matrix.board }} image
         run: docker compose run --rm ${{ matrix.service }}
 
