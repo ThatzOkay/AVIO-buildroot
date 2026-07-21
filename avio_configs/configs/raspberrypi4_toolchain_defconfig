@@ -7,10 +7,14 @@
 # rootfs, and package selections since none of that is needed to build the
 # cross toolchain, which keeps this build fast (~1-2h vs ~5.5-6h).
 #
-# The BR2_aarch64 / BR2_cortex_a72 / BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_6
-# lines below MUST stay identical to the corresponding lines in
-# raspberrypi4_defconfig. This is checked by
-# avio_configs/scripts/check-toolchain-sync.sh, run as a CI step in both
+# The BR2_aarch64 / BR2_cortex_a72 lines below MUST stay identical to the
+# corresponding lines in raspberrypi4_defconfig, and BR2_KERNEL_HEADERS_6_6's
+# version number must stay in sync with raspberrypi4_defconfig's
+# BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_6 (a different Kconfig symbol,
+# since that one only takes effect when BR2_LINUX_KERNEL=y, which this
+# defconfig deliberately doesn't set -- BR2_KERNEL_HEADERS_6_6 is the one
+# that actually controls which headers get installed here). This is checked
+# by avio_configs/scripts/check-toolchain-sync.sh, run as a CI step in both
 # build-toolchain.yml and build.yml.
 
 BR2_aarch64=y
@@ -18,8 +22,8 @@ BR2_cortex_a72=y
 
 BR2_TOOLCHAIN_BUILDROOT_CXX=y
 
-# Linux headers same as kernel, a 6.6 series (must match raspberrypi4_defconfig)
-BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_6=y
+# Linux headers, a 6.6 series (version must match raspberrypi4_defconfig)
+BR2_KERNEL_HEADERS_6_6=y
 
 # Compiler cache, so repeated/iterative toolchain-producer runs are fast too
 BR2_CCACHE=y
