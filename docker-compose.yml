@@ -11,7 +11,7 @@ services:
 
   generate_image_donotuse: &generate_image
     <<: *base
-    command: bash -x -c "make BR2_EXTERNAL=../avio_configs/ O=output/$${BOARD_NAME} $${BOARD_NAME}_defconfig && cd output/$${BOARD_NAME} && make && mkdir -p /app/images/ && cp images/sdcard.img /app/images/sdcard-$${BOARD_NAME}.img"
+    command: bash -x -c "if [ -f /app/webkitgtk-$${BOARD_NAME}.tar.gz ]; then tar xzf /app/webkitgtk-$${BOARD_NAME}.tar.gz -C /app/buildroot; fi && make BR2_EXTERNAL=../avio_configs/ O=output/$${BOARD_NAME} $${BOARD_NAME}_defconfig && cd output/$${BOARD_NAME} && make && mkdir -p /app/images/ && cp images/sdcard.img /app/images/sdcard-$${BOARD_NAME}.img"
 
   rpi4:
     <<: *generate_image
@@ -34,6 +34,20 @@ services:
 
   rpi5-toolchain:
     <<: *generate_toolchain
+    environment:
+      - BOARD_NAME=raspberrypi5
+
+  generate_webkitgtk_donotuse: &generate_webkitgtk
+    <<: *base
+    command: bash /app/avio_configs/scripts/build-webkitgtk-prebuilt.sh
+
+  rpi4-webkitgtk:
+    <<: *generate_webkitgtk
+    environment:
+      - BOARD_NAME=raspberrypi4
+
+  rpi5-webkitgtk:
+    <<: *generate_webkitgtk
     environment:
       - BOARD_NAME=raspberrypi5
 

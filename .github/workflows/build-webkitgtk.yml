@@ -1,21 +1,37 @@
-name: Build images
+name: Build webkitgtk
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
-  build:
+  ensure-release:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    steps:
+      - name: Ensure the 'prebuilt-artifacts' release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view prebuilt-artifacts --repo "${{ github.repository }}" >/dev/null 2>&1 || \
+          gh release create prebuilt-artifacts \
+            --repo "${{ github.repository }}" \
+            --title "Prebuilt package output trees" \
+            --notes "Auto-published by package-prebuild workflows (e.g. Build webkitgtk). Assets are overwritten (--clobber) on every run; do not depend on a specific historical version." \
+            --target main
+
+  build-and-publish:
+    needs: ensure-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
     strategy:
       fail-fast: false
       matrix:
         include:
-          - service: rpi4
+          - service: rpi4-webkitgtk
             board: raspberrypi4
-          - service: rpi5
+          - service: rpi5-webkitgtk
             board: raspberrypi5
     steps:
       - name: Checkout
@@ -29,14 +45,6 @@ jobs:
       - name: Free up disk space
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache
-
-      - name: Restore ccache
-        uses: actions/cache@v4
-        with:
-          path: .ccache
-          key: ccache-v2-${{ matrix.board }}-${{ github.run_id }}
-          restore-keys: |
-            ccache-v2-${{ matrix.board }}-
 
       - name: Download prebuilt toolchain
         env:
@@ -55,31 +63,24 @@ jobs:
           chmod -R 777 toolchains
           "toolchains/${{ matrix.board }}/relocate-sdk.sh" "/app/toolchains/${{ matrix.board }}"
 
-      - name: Download prebuilt webkitgtk (optional speedup)
+      - name: Prepare bind-mounted directories
+        run: |
+          mkdir -p images
+          chmod -R 777 images
+
+      - name: Build ${{ matrix.board }} webkitgtk
+        run: docker compose run --rm ${{ matrix.service }}
+
+      - name: Publish webkitgtk prebuild to the 'prebuilt-artifacts' release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release download prebuilt-artifacts \
-              --repo "${{ github.repository }}" \
-              --pattern "webkitgtk-${{ matrix.board }}.tar.gz" \
-              --output "webkitgtk-${{ matrix.board }}.tar.gz" \
-              --clobber; then
-            echo "Prebuilt webkitgtk found; the build step will restore it into output/${{ matrix.board }} before running make."
-          else
-            echo "::warning::No prebuilt webkitgtk asset for ${{ matrix.board }} yet. Run the 'Build webkitgtk' workflow (workflow_dispatch) to speed up future builds. Continuing without it."
-          fi
+          gh release upload prebuilt-artifacts "images/webkitgtk-${{ matrix.board }}.tar.gz" \
+            --repo "${{ github.repository }}" --clobber
 
-      - name: Prepare bind-mounted directories
-        run: |
-          mkdir -p .ccache images
-          chmod -R 777 .ccache images
-
-      - name: Build ${{ matrix.board }} image
-        run: docker compose run --rm ${{ matrix.service }}
-
-      - name: Upload ${{ matrix.board }} artifact
+      - name: Upload webkitgtk prebuild as a workflow artifact (debug/inspection)
         uses: actions/upload-artifact@v4
         with:
-          name: sdcard-${{ matrix.board }}
-          path: images/sdcard-${{ matrix.board }}.img
+          name: webkitgtk-${{ matrix.board }}
+          path: images/webkitgtk-${{ matrix.board }}.tar.gz
           if-no-files-found: error
