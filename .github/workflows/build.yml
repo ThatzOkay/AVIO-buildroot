@@ -23,6 +23,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check producer/consumer defconfig sync
+        run: bash avio_configs/scripts/check-toolchain-sync.sh
+
       - name: Free up disk space
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache
@@ -34,6 +37,23 @@ jobs:
           key: ccache-v2-${{ matrix.board }}-${{ github.run_id }}
           restore-keys: |
             ccache-v2-${{ matrix.board }}-
+
+      - name: Download prebuilt toolchain
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "toolchains/${{ matrix.board }}"
+          if ! gh release download toolchains \
+              --repo "${{ github.repository }}" \
+              --pattern "toolchain-${{ matrix.board }}.tar.gz" \
+              --output "toolchain-${{ matrix.board }}.tar.gz" \
+              --clobber; then
+            echo "::error::No prebuilt toolchain asset for ${{ matrix.board }} on the 'toolchains' release. Run the 'Build toolchain' workflow (workflow_dispatch) first."
+            exit 1
+          fi
+          tar xzf "toolchain-${{ matrix.board }}.tar.gz" -C "toolchains/${{ matrix.board }}"
+          chmod -R 777 toolchains
+          "toolchains/${{ matrix.board }}/relocate-sdk.sh" "/app/toolchains/${{ matrix.board }}"
 
       - name: Prepare bind-mounted directories
         run: |
