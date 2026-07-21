@@ -1,0 +1,28 @@
+# Toolchain-producer defconfig for raspberrypi4.
+#
+# This is a full, valid Buildroot defconfig (required because `make
+# <name>_defconfig` validates the whole Kconfig tree), but it is only ever
+# meant to be built as far as `make toolchain` (see
+# avio_configs/scripts/build-toolchain.sh). It intentionally omits kernel,
+# rootfs, and package selections since none of that is needed to build the
+# cross toolchain, which keeps this build fast (~1-2h vs ~5.5-6h).
+#
+# The BR2_aarch64 / BR2_cortex_a72 / BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_6
+# lines below MUST stay identical to the corresponding lines in
+# raspberrypi4_defconfig. This is checked by
+# avio_configs/scripts/check-toolchain-sync.sh, run as a CI step in both
+# build-toolchain.yml and build.yml.
+
+BR2_aarch64=y
+BR2_cortex_a72=y
+
+BR2_TOOLCHAIN_BUILDROOT_CXX=y
+
+# Linux headers same as kernel, a 6.6 series (must match raspberrypi4_defconfig)
+BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_6=y
+
+# Compiler cache, so repeated/iterative toolchain-producer runs are fast too
+BR2_CCACHE=y
+BR2_CCACHE_DIR="/app/.ccache"
+BR2_CCACHE_INITIAL_SETUP="-M 2G"
+BR2_JLEVEL=3

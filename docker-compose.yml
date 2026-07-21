@@ -23,6 +23,20 @@ services:
     environment:
       - BOARD_NAME=raspberrypi5
 
+  generate_toolchain_donotuse: &generate_toolchain
+    <<: *base
+    command: bash /app/avio_configs/scripts/build-toolchain.sh
+
+  rpi4-toolchain:
+    <<: *generate_toolchain
+    environment:
+      - BOARD_NAME=raspberrypi4
+
+  rpi5-toolchain:
+    <<: *generate_toolchain
+    environment:
+      - BOARD_NAME=raspberrypi5
+
 volumes:
   dl:
   output:

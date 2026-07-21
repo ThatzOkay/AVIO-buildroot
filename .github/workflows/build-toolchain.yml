@@ -1,0 +1,84 @@
+name: Build toolchain
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'avio_configs/configs/raspberrypi4_defconfig'
+      - 'avio_configs/configs/raspberrypi5_defconfig'
+      - 'avio_configs/configs/raspberrypi4_toolchain_defconfig'
+      - 'avio_configs/configs/raspberrypi5_toolchain_defconfig'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  ensure-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure the 'toolchains' release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view toolchains --repo "${{ github.repository }}" >/dev/null 2>&1 || \
+          gh release create toolchains \
+            --repo "${{ github.repository }}" \
+            --title "Prebuilt cross toolchains" \
+            --notes "Auto-published by the Build toolchain workflow. Assets are overwritten (--clobber) on every run; do not depend on a specific historical version." \
+            --target main
+
+  build-and-publish:
+    needs: ensure-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: rpi4-toolchain
+            board: raspberrypi4
+          - service: rpi5-toolchain
+            board: raspberrypi5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Check producer/consumer defconfig sync
+        run: bash avio_configs/scripts/check-toolchain-sync.sh
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache
+
+      - name: Restore toolchain ccache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: toolchain-ccache-v1-${{ matrix.board }}-${{ github.run_id }}
+          restore-keys: |
+            toolchain-ccache-v1-${{ matrix.board }}-
+
+      - name: Prepare bind-mounted directories
+        run: |
+          mkdir -p .ccache images
+          chmod 777 .ccache images
+
+      - name: Build ${{ matrix.board }} toolchain
+        run: docker compose run --rm ${{ matrix.service }}
+
+      - name: Publish toolchain to the 'toolchains' release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload toolchains "images/toolchain-${{ matrix.board }}.tar.gz" \
+            --repo "${{ github.repository }}" --clobber
+
+      - name: Upload toolchain as a workflow artifact (debug/inspection)
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolchain-${{ matrix.board }}
+          path: images/toolchain-${{ matrix.board }}.tar.gz
+          if-no-files-found: error
