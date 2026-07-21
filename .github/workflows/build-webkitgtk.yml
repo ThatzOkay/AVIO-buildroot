@@ -65,8 +65,8 @@ jobs:
 
       - name: Prepare bind-mounted directories
         run: |
-          mkdir -p images
-          chmod -R 777 images
+          mkdir -p .ccache images
+          chmod -R 777 .ccache images
 
       - name: Build ${{ matrix.board }} webkitgtk
         run: docker compose run --rm ${{ matrix.service }}
