@@ -5,6 +5,7 @@ set -e
 set -x
 
 TMP=$(mktemp -d)
+ROOT_DIR="$(pwd)"
 
 LATEST=$(curl -s https://api.github.com/repos/ThatzOkay/AVIO/releases \
   | jq -r '.[0].assets[] | select(.name | endswith(".deb") and contains("arm64")) | .browser_download_url')
@@ -24,4 +25,4 @@ cp -r usr/lib/avio "$1/usr/lib/"
 
 rm -rf "$TMP"
 
-source board/raspberrypi/post-build.sh
+source "$ROOT_DIR/board/raspberrypi/post-build.sh"
