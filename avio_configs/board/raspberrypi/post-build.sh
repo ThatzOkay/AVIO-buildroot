@@ -17,7 +17,10 @@ DATA_TAR=$(ar t avio.deb | grep '^data\.tar')
 tar -xf "$DATA_TAR"
 
 install -Dm755 usr/bin/avio "$1/usr/bin/avio"
-cp -r usr/share/avio "$1/usr/share/"
+install -Dm755 usr/bin/gst-host "$1/usr/bin/gst-host"
+cp -r usr/lib/avio "$1/usr/lib/"
+[ -d usr/share/applications ] && cp -r usr/share/applications "$1/usr/share/"
+[ -d usr/share/icons ] && cp -r usr/share/icons "$1/usr/share/"
 
 rm -rf "$TMP"
 
