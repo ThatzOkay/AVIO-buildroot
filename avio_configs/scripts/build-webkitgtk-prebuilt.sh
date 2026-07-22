@@ -22,4 +22,11 @@ make -C "$BR_DIR" BR2_EXTERNAL=../avio_configs/ O="output/${BOARD_NAME}" "${BOAR
 make -C "$BR_DIR/output/${BOARD_NAME}" webkitgtk
 
 mkdir -p /app/images
-tar czf "/app/images/webkitgtk-${BOARD_NAME}.tar.gz" -C "$BR_DIR" "output/${BOARD_NAME}"
+TARBALL="/app/images/webkitgtk-${BOARD_NAME}.tar.gz"
+tar czf "$TARBALL" -C "$BR_DIR" "output/${BOARD_NAME}"
+
+# GitHub release assets are capped at 2GiB each and the full output tree
+# (WebKit's build objects included) blows past that easily, so split into
+# chunks the caller workflow re-concatenates before extracting.
+split -b 1800M "$TARBALL" "${TARBALL}.part-"
+rm -f "$TARBALL"

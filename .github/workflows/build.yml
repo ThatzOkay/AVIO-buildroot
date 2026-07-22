@@ -61,9 +61,10 @@ jobs:
         run: |
           if gh release download prebuilt-artifacts \
               --repo "${{ github.repository }}" \
-              --pattern "webkitgtk-${{ matrix.board }}.tar.gz" \
-              --output "webkitgtk-${{ matrix.board }}.tar.gz" \
+              --pattern "webkitgtk-${{ matrix.board }}.tar.gz.part-*" \
               --clobber; then
+            cat webkitgtk-${{ matrix.board }}.tar.gz.part-* > "webkitgtk-${{ matrix.board }}.tar.gz"
+            rm -f webkitgtk-${{ matrix.board }}.tar.gz.part-*
             echo "Prebuilt webkitgtk found; the build step will restore it into output/${{ matrix.board }} before running make."
           else
             echo "::warning::No prebuilt webkitgtk asset for ${{ matrix.board }} yet. Run the 'Build webkitgtk' workflow (workflow_dispatch) to speed up future builds. Continuing without it."
