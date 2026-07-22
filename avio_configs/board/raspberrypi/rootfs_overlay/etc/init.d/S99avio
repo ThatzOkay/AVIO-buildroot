@@ -33,6 +33,11 @@ start() {
 	mkdir -p "$XDG_RUNTIME_DIR"
 	chmod 0700 "$XDG_RUNTIME_DIR"
 
+	# Hand off from the psplash boot screen (S01psplash) to the kiosk --
+	# psplash and Cage both want the display, so drop the splash right
+	# before Cage grabs it.
+	psplash-write "QUIT" 2>/dev/null
+
 	export AVIO_KIOSK=1
 	AVIO_KIOSK_MODE="${AVIO_KIOSK_MODE:-native}"
 

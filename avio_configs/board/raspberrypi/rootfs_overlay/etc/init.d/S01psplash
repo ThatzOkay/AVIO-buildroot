@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# Show the default psplash boot screen as early as possible, so there's
+# something on screen before Cage/AVIO (started by S99avio) takes over the
+# display. S99avio is responsible for quitting it once the kiosk is ready.
+
+start() {
+	printf 'Starting psplash: '
+	psplash -n &
+	echo "OK"
+}
+
+stop() {
+	printf 'Stopping psplash: '
+	psplash-write "QUIT" 2>/dev/null
+	echo "OK"
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+	stop
+	start
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
