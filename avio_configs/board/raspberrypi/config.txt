@@ -6,6 +6,7 @@ disable_poe_fan=1
 
 # TTL serial console (see cmdline.txt's console=serial0,115200)
 enable_uart=1
+dtoverlay=miniuart-bt
 
 # To use an external initramfs file
 #initramfs rootfs.cpio.gz
