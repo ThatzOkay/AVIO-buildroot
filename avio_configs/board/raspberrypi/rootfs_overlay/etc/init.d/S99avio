@@ -1,0 +1,104 @@
+#!/bin/sh
+#
+# Start the AVIO kiosk (Cage compositor + AVIO) on boot.
+#
+# Unlike a getty+.bash_profile autostart, this runs as root with no login
+# shell involved (BR2_TARGET_GENERIC_GETTY is not set for this board), so
+# there's no respawn safety net from inittab if Cage/AVIO ever exits --
+# the loop below re-execs it instead so the kiosk always comes back.
+
+DAEMON="avio"
+RUN_DIR="/run/avio"
+PIDFILE="$RUN_DIR/$DAEMON.pid"
+LOGFILE="$RUN_DIR/$DAEMON.log"
+
+# Rootfs is read-only in normal operation (see fstab / BR2_TARGET_GENERIC_
+# REMOUNT_ROOTFS_RW=n) and the skeleton doesn't even provide /var/log or
+# /var/run, so the live log lives on /run (tmpfs -- fine for "SSH in and see
+# why it's crash-looping right now", gone on reboot). /persist is the one
+# real writable partition that survives a reboot, so each time Cage/AVIO
+# exits we snapshot the log there too (capped size, single file, overwritten
+# each time) for postmortem access after an unattended crash/reboot.
+PERSIST_LOG_DIR="/persist/logs"
+PERSIST_LOG="$PERSIST_LOG_DIR/$DAEMON.log"
+PERSIST_LOG_MAX_BYTES=1048576
+
+start() {
+	printf 'Starting %s: ' "$DAEMON"
+
+	mkdir -p "$RUN_DIR"
+	: > "$LOGFILE"
+
+	export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+	mkdir -p "$XDG_RUNTIME_DIR"
+	chmod 0700 "$XDG_RUNTIME_DIR"
+
+	export AVIO_KIOSK=1
+	AVIO_KIOSK_MODE="${AVIO_KIOSK_MODE:-native}"
+
+	# Default: Cage uses the display's preferred mode.
+	# Set AVIO_KIOSK_MODE=WxH@Hz to force a mode (e.g. cap a 4K panel at 1080p).
+	if [ "$AVIO_KIOSK_MODE" != "native" ]; then
+		(
+			for _ in $(seq 1 40); do
+				if [ -S "$XDG_RUNTIME_DIR/wayland-0" ]; then
+					OUT=$(WAYLAND_DISPLAY=wayland-0 wlr-randr 2>/dev/null \
+						| awk 'NR==1 {print $1; exit}')
+					[ -n "$OUT" ] && WAYLAND_DISPLAY=wayland-0 \
+						wlr-randr --output "$OUT" --mode "$AVIO_KIOSK_MODE" 2>/dev/null
+					break
+				fi
+				sleep 0.25
+			done
+		) &
+	fi
+
+	(
+		while true; do
+			# Also streamed live to /dev/console (the TTL serial port, per
+			# cmdline.txt's console=serial0,115200) so logs are visible just
+			# by plugging in a serial adapter, no SSH login required.
+			cage -- /usr/bin/avio 2>&1 | tee -a "$LOGFILE" >/dev/console
+			if mountpoint -q /persist 2>/dev/null; then
+				mkdir -p "$PERSIST_LOG_DIR"
+				tail -c "$PERSIST_LOG_MAX_BYTES" "$LOGFILE" > "$PERSIST_LOG" 2>/dev/null
+			fi
+			sleep 1
+		done
+	) &
+	echo $! > "$PIDFILE"
+	echo "OK"
+}
+
+stop() {
+	printf 'Stopping %s: ' "$DAEMON"
+	if [ -f "$PIDFILE" ]; then
+		kill "$(cat "$PIDFILE")" 2>/dev/null
+		rm -f "$PIDFILE"
+	fi
+	killall avio 2>/dev/null
+	killall cage 2>/dev/null
+	echo "OK"
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+	restart
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
