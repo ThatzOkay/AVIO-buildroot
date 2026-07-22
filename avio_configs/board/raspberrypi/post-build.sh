@@ -13,7 +13,8 @@ curl -L -o "$TMP/avio.deb" "$LATEST"
 
 cd "$TMP"
 ar x avio.deb
-tar -xf data.tar.xz
+DATA_TAR=$(ar t avio.deb | grep '^data\.tar')
+tar -xf "$DATA_TAR"
 
 install -Dm755 usr/bin/avio "$1/usr/bin/avio"
 cp -r usr/share/avio "$1/usr/share/"
