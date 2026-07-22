@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get -q update
 RUN apt-get purge -q -y snapd lxcfs lxd ubuntu-core-launcher snap-confine
-RUN apt-get -q -y install file wget cpio rsync locales \
+RUN apt-get -q -y install file wget curl jq cpio rsync locales \
 		build-essential libncurses5-dev python3-setuptools \
 		git bzr cvs mercurial subversion libc6 unzip bc \
 		vim

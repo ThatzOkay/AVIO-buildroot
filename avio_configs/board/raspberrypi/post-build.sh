@@ -15,8 +15,8 @@ cd "$TMP"
 ar x avio.deb
 tar -xf data.tar.xz
 
-install -Dm755 usr/bin/avio /usr/bin/avio
-cp -r usr/share/avio /usr/share/
+install -Dm755 usr/bin/avio "$1/usr/bin/avio"
+cp -r usr/share/avio "$1/usr/share/"
 
 rm -rf "$TMP"
 
