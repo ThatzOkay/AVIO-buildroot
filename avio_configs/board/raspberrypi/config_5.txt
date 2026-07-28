@@ -1,5 +1,13 @@
 kernel=Image
 
+# Force 64-bit mode. Without this, the firmware's arm_64bit auto-detection
+# does not reliably kick in for a custom kernel=Image filename, and it was
+# silently loading/jumping into this arm64 kernel using the 32-bit boot
+# protocol -- the kernel would appear to "load" fine per the firmware log,
+# but the ARM cores would crash before executing a single line of kernel
+# code, with zero output even from earlycon.
+arm_64bit=1
+
 disable_splash=1
 boot_delay=0
 disable_poe_fan=1
@@ -28,3 +36,4 @@ dtparam=krnbt=on
 
 # Enable dwc2 required for gadget mode
 dtoverlay=dwc2,dr_mode=peripheral
+dtoverlay=vc4-kms-v3d

@@ -59,6 +59,18 @@ BR2_PACKAGE_WEBKITGTK=y
 BR2_PACKAGE_LIBRTLSDR=y
 BR2_PACKAGE_LIBDRM=y
 
+# GStreamer + PulseAudio client lib (avio links libgstapp-1.0.so.0 and
+# libpulse.so.0 directly; the pulse plugin selects pulseaudio for us and
+# lets pipewire's pipewire-pulse bridge those calls to pipewire/wireplumber)
+BR2_PACKAGE_GSTREAMER1=y
+BR2_PACKAGE_GST1_PLUGINS_BASE=y
+BR2_PACKAGE_GST1_PLUGINS_BASE_PLUGIN_APP=y
+BR2_PACKAGE_GST1_PLUGINS_GOOD=y
+BR2_PACKAGE_GST1_PLUGINS_GOOD_PLUGIN_PULSE=y
+
+# xkb data (cage/libxkbcommon need /usr/share/X11/xkb even without X11)
+BR2_PACKAGE_XKEYBOARD_CONFIG=y
+
 # Boot splash screen
 BR2_PACKAGE_PSPLASH=y
 BR2_PACKAGE_PSPLASH_PROGRESS_BAR=y

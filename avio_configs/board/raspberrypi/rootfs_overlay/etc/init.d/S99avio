@@ -29,6 +29,11 @@ start() {
 	mkdir -p "$RUN_DIR"
 	: > "$LOGFILE"
 
+	# HOME is unset this early in boot, so anything that writes to
+	# ~/.cache (e.g. libxkbcommon) fails against the read-only rootfs.
+	# RUN_DIR is tmpfs and already created above.
+	export HOME="$RUN_DIR"
+
 	export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 	mkdir -p "$XDG_RUNTIME_DIR"
 	chmod 0700 "$XDG_RUNTIME_DIR"
