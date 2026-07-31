@@ -22,6 +22,12 @@ services:
     <<: *generate_image
     environment:
       - BOARD_NAME=raspberrypi5
+  
+  x86_64:
+    <<: *generate_image
+    environment:
+      - BOARD_NAME=generic-x86_64
+  
 
   generate_toolchain_donotuse: &generate_toolchain
     <<: *base
@@ -37,6 +43,11 @@ services:
     environment:
       - BOARD_NAME=raspberrypi5
 
+  x86_64-toolchain:
+    <<: *generate_toolchain
+    environment:
+      - BOARD_NAME=generic-x86_64
+
   generate_webkitgtk_donotuse: &generate_webkitgtk
     <<: *base
     command: bash /app/avio_configs/scripts/build-webkitgtk-prebuilt.sh
@@ -50,6 +61,11 @@ services:
     <<: *generate_webkitgtk
     environment:
       - BOARD_NAME=raspberrypi5
+
+  x86_64-webkitgtk:
+    <<: *generate_webkitgtk
+    environment:
+      - BOARD_NAME=generic-x86_64
 
 volumes:
   dl:

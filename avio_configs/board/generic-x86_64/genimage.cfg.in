@@ -1,0 +1,66 @@
+image efi.vfat {
+	vfat {
+		label = "EFI"
+		files = {
+			"efi-part/EFI"
+		}
+	}
+
+	size = 64M
+}
+
+image persist.ext4 {
+	name = "persist"
+
+	ext4 {
+		label = "persist"
+		use-mke2fs = true
+	}
+
+	size = 32M
+}
+
+image avio.img {
+	hdimage {
+		align = 1M
+	}
+
+	# GRUB's stage-1 boot sector (BIOS boot). Its compiled-in default
+	# assumes the core image starts at LBA 1, right after this sector --
+	# see grub-core/boot/i386/pc/boot.S kernel_sector -- so this only
+	# works because the "core" partition below is placed immediately
+	# after it with no gap.
+	partition mbr-boot {
+		in-partition-table = "no"
+		image = "boot.img"
+		offset = 0
+		size = 512
+		holes = {"(440; 512)"}
+	}
+
+	# GRUB's stage-2 core image (BIOS boot), must start at LBA 1.
+	partition core {
+		in-partition-table = "no"
+		image = "grub.img"
+		offset = 512
+	}
+
+	# EFI System Partition, also readable by BIOS-mode GRUB for its
+	# grub.cfg via the "fat"/"part_msdos" builtin modules.
+	partition efi {
+		partition-type = 0xEF
+		bootable = "true"
+		image = "efi.vfat"
+		offset = 1M
+	}
+
+	partition rootfs {
+		partition-type = 0x83
+		image = "rootfs.ext4"
+	}
+
+	partition persist {
+		partition-type = 0x83
+		image = "persist.ext4"
+	}
+}

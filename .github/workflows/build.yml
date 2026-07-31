@@ -17,6 +17,8 @@ jobs:
             board: raspberrypi4
           - service: rpi5
             board: raspberrypi5
+          - service: x86_64
+            board: x86_64
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -1,0 +1,12 @@
+BR2_x86_64=y
+
+BR2_TOOLCHAIN_BUILDROOT_CXX=y
+
+# Linux headers, a 6.6 series (version must match raspberrypi4_defconfig)
+BR2_KERNEL_HEADERS_6_6=y
+
+# Compiler cache, so repeated/iterative toolchain-producer runs are fast too
+BR2_CCACHE=y
+BR2_CCACHE_DIR="/app/.ccache"
+BR2_CCACHE_INITIAL_SETUP="-M 2G"
+BR2_JLEVEL=3
