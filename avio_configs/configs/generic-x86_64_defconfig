@@ -58,6 +58,13 @@ BR2_PACKAGE_WEBKITGTK=y
 BR2_PACKAGE_LIBRTLSDR=y
 BR2_PACKAGE_LIBDRM=y
 
+# Needed by iris/radeonsi unconditionally, and by crocus in Mesa 26.x for
+# its CLC-based shader precompilation (crocus now shares that code path
+# with iris) -- without this, Kconfig silently drops iris/radeonsi (their
+# "depends on" isn't met) and crocus fails at meson configure time with
+# "Feature llvm cannot be disabled: CLC requires LLVM".
+BR2_PACKAGE_MESA3D_LLVM=y
+
 BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_IRIS=y
 BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_CROCUS=y
 BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_RADEONSI=y

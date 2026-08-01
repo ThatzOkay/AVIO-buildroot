@@ -8,7 +8,7 @@ TMP=$(mktemp -d)
 BOARD_DIR="$(dirname "$0")"
 
 LATEST=$(curl -s https://api.github.com/repos/ThatzOkay/AVIO/releases \
-  | jq -r '.[0].assets[] | select(.name | endswith(".deb") and contains("x64")) | .browser_download_url')
+  | jq -r '.[0].assets[] | select(.name | endswith(".deb") and contains("amd64")) | .browser_download_url')
 
 curl -L -o "$TMP/avio.deb" "$LATEST"
 
