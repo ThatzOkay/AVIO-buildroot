@@ -34,7 +34,7 @@ jobs:
           - service: rpi5-webkitgtk
             board: raspberrypi5
           - service: x86_64-webkitgtk
-            board: x86_64
+            board: generic-x86_64
     steps:
       - name: Checkout
         uses: actions/checkout@v4

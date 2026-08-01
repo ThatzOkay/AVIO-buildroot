@@ -55,4 +55,7 @@ check_exact raspberrypi5 BR2_aarch64
 check_exact raspberrypi5 BR2_cortex_a76
 check_headers_version raspberrypi5
 
+check_exact generic-x86_64 BR2_x86_64
+check_headers_version generic-x86_64
+
 echo "Toolchain producer/consumer defconfigs are in sync."

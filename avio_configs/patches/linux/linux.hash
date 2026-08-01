@@ -1,2 +1,5 @@
 # Locally calculated
 sha256  dab3052783c68c46a5bc645b1c38d9705da995ab42823566518b62eb1fa1ef97  linux-576cc10e1ed50a9eacffc7a05c796051d7343ea4.tar.gz
+
+# From https://cdn.kernel.org/pub/linux/kernel/v6.x/sha256sums.asc
+sha256  e76329b7ee046883d55a1868253cffe67c526a6da6140ebecd3cd6ac44db4abb  linux-6.6.147.tar.xz
