@@ -11,7 +11,7 @@ services:
 
   generate_image_donotuse: &generate_image
     <<: *base
-    command: bash -x -c "if [ -f /app/webkitgtk-$${BOARD_NAME}.tar.gz ]; then tar xzf /app/webkitgtk-$${BOARD_NAME}.tar.gz -C /app/buildroot; fi && make BR2_EXTERNAL=../avio_configs/ O=output/$${BOARD_NAME} $${BOARD_NAME}_defconfig && cd output/$${BOARD_NAME} && make && mkdir -p /app/images/ && cp images/sdcard.img /app/images/sdcard-$${BOARD_NAME}.img"
+    command: bash -x -c "if [ -f /app/webkitgtk-$${BOARD_NAME}.tar.gz ]; then tar xzf /app/webkitgtk-$${BOARD_NAME}.tar.gz -C /app/buildroot; fi && make BR2_EXTERNAL=../avio_configs/ O=output/$${BOARD_NAME} $${BOARD_NAME}_defconfig && cd output/$${BOARD_NAME} && make && mkdir -p /app/images/ && cp images/avio.img /app/images/avio-$${BOARD_NAME}.img"
 
   rpi4:
     <<: *generate_image
@@ -64,6 +64,15 @@ services:
 
   x86_64-webkitgtk:
     <<: *generate_webkitgtk
+    environment:
+      - BOARD_NAME=generic-x86_64
+
+  generate_llvm_donotuse: &generate_llvm
+    <<: *base
+    command: bash /app/avio_configs/scripts/build-llvm-prebuilt.sh
+
+  x86_64-llvm:
+    <<: *generate_llvm
     environment:
       - BOARD_NAME=generic-x86_64
 

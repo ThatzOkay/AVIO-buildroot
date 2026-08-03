@@ -13,10 +13,20 @@
 # tree this produces is byte-for-byte what the main build would have produced
 # up to this point -- no path relocation needed since both runs use the
 # identical /app/buildroot/output/$BOARD_NAME layout.
+# If the caller workflow downloaded a "Build LLVM" prebuild (see
+# build-llvm-prebuilt.sh -- currently only produced for generic-x86_64,
+# where BR2_PACKAGE_MESA3D_LLVM makes host-llvm + llvm alone take ~4h from
+# cold), restore it first so this build's own `make webkitgtk` doesn't
+# rebuild llvm on top of WebKitGTK's own ~5h and blow past GitHub Actions'
+# 6h-per-job ceiling.
 set -euo pipefail
 
 : "${BOARD_NAME:?BOARD_NAME must be set}"
 BR_DIR=/app/buildroot
+
+if [ -f "/app/llvm-${BOARD_NAME}.tar.gz" ]; then
+	tar xzf "/app/llvm-${BOARD_NAME}.tar.gz" -C "$BR_DIR"
+fi
 
 make -C "$BR_DIR" BR2_EXTERNAL=../avio_configs/ O="output/${BOARD_NAME}" "${BOARD_NAME}_defconfig"
 make -C "$BR_DIR/output/${BOARD_NAME}" webkitgtk

@@ -23,6 +23,11 @@ image persist.ext4 {
 image avio.img {
 	hdimage {
 		align = 1M
+		# Pinned explicitly (rather than relying on genimage's default)
+		# since grub.cfg's "root=" kernel argument hardcodes the
+		# resulting PARTUUID (disk-signature + partition number) --
+		# see grub-bios.cfg / grub-efi.cfg.
+		disk-signature = 0x00000000
 	}
 
 	# GRUB's stage-1 boot sector (BIOS boot). Its compiled-in default

@@ -1,4 +1,4 @@
-name: Build webkitgtk
+name: Build LLVM
 
 on:
   workflow_dispatch: {}
@@ -29,11 +29,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - service: rpi4-webkitgtk
-            board: raspberrypi4
-          - service: rpi5-webkitgtk
-            board: raspberrypi5
-          - service: x86_64-webkitgtk
+          # Only generic-x86_64 enables BR2_PACKAGE_MESA3D_LLVM (radeonsi's
+          # runtime shader compiler needs real LLVM; crocus/iris only need it
+          # for their host-side mesa-clc build tool). Neither RPi defconfig
+          # builds LLVM at all, so there's nothing for them to prebuild here.
+          - service: x86_64-llvm
             board: generic-x86_64
     steps:
       - name: Checkout
@@ -65,51 +65,32 @@ jobs:
           chmod -R 777 toolchains
           "toolchains/${{ matrix.board }}/relocate-sdk.sh" "/app/toolchains/${{ matrix.board }}"
 
-      # generic-x86_64 only: BR2_PACKAGE_MESA3D_LLVM makes host-llvm + llvm
-      # alone take ~4h from cold, which combined with WebKitGTK's own ~5h
-      # blows past GitHub Actions' 6h-per-job ceiling on hosted runners. See
-      # avio_configs/scripts/build-llvm-prebuilt.sh for the producer side.
-      - name: Download prebuilt LLVM [generic-x86_64]
-        if: matrix.board == 'generic-x86_64'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if ! gh release download prebuilt-artifacts \
-              --repo "${{ github.repository }}" \
-              --pattern "llvm-${{ matrix.board }}.tar.gz.part-*" \
-              --clobber; then
-            echo "::error::No prebuilt LLVM asset for ${{ matrix.board }} on the 'prebuilt-artifacts' release. Run the 'Build LLVM' workflow (workflow_dispatch) first."
-            exit 1
-          fi
-          cat llvm-${{ matrix.board }}.tar.gz.part-* > "llvm-${{ matrix.board }}.tar.gz"
-          rm -f llvm-${{ matrix.board }}.tar.gz.part-*
-
-      - name: Restore ccache
+      - name: Restore LLVM ccache
         uses: actions/cache@v4
         with:
           path: .ccache
-          key: webkitgtk-ccache-v1-${{ matrix.board }}-${{ github.run_id }}
+          key: llvm-ccache-v1-${{ matrix.board }}-${{ github.run_id }}
           restore-keys: |
-            webkitgtk-ccache-v1-${{ matrix.board }}-
+            llvm-ccache-v1-${{ matrix.board }}-
 
       - name: Prepare bind-mounted directories
         run: |
           mkdir -p .ccache images
           chmod -R 777 .ccache images
 
-      - name: Build ${{ matrix.board }} webkitgtk
+      - name: Build ${{ matrix.board }} LLVM
         run: docker compose run --rm ${{ matrix.service }}
 
-      - name: Publish webkitgtk prebuild to the 'prebuilt-artifacts' release
+      - name: Publish LLVM prebuild to the 'prebuilt-artifacts' release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload prebuilt-artifacts images/webkitgtk-${{ matrix.board }}.tar.gz.part-* \
+          gh release upload prebuilt-artifacts images/llvm-${{ matrix.board }}.tar.gz.part-* \
             --repo "${{ github.repository }}" --clobber
 
-      - name: Upload webkitgtk prebuild as a workflow artifact (debug/inspection)
+      - name: Upload LLVM prebuild as a workflow artifact (debug/inspection)
         uses: actions/upload-artifact@v4
         with:
-          name: webkitgtk-${{ matrix.board }}
-          path: images/webkitgtk-${{ matrix.board }}.tar.gz.part-*
+          name: llvm-${{ matrix.board }}
+          path: images/llvm-${{ matrix.board }}.tar.gz.part-*
           if-no-files-found: error

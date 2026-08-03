@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# Mounts /boot (EFI partition) and /persist. These can't just be plain
+# fstab entries: BusyBox's mount here doesn't resolve LABEL=/PARTUUID=
+# fstab entries ("Can't lookup blockdev") even though the kernel's own
+# root= parser does (confirmed: neither works, unlike a full distro with
+# udev's database available by the time fstab is processed). BusyBox's
+# stat applet also isn't built into this image, and /dev/root isn't a
+# usable device node this early, ruling out deriving the disk from it.
+#
+# So instead: probe a short list of realistic disk names -- devtmpfs
+# auto-populates real kernel device names (vda, sda, nvme0n1, ...) with
+# no udev/stat dependency -- and address the sibling partitions (1=EFI,
+# 3=persist -- see genimage.cfg.in) relative to whichever one exists.
+
+find_disk() {
+	for d in /dev/vda /dev/sda /dev/xvda /dev/hda /dev/nvme0n1; do
+		case "$d" in
+			*nvme*) p1="${d}p1" ;;
+			*)      p1="${d}1" ;;
+		esac
+		[ -b "$p1" ] && { echo "$d"; return 0; }
+	done
+	return 1
+}
+
+start() {
+	DISK=$(find_disk)
+	if [ -z "$DISK" ]; then
+		echo "S02mount-partitions: no known boot disk found, skipping"
+		return 1
+	fi
+	case "$DISK" in
+		*nvme*) SEP=p ;;
+		*) SEP= ;;
+	esac
+
+	printf 'Mounting /boot: '
+	mount "${DISK}${SEP}1" /boot && echo "OK" || echo "FAIL"
+
+	printf 'Mounting /persist: '
+	mount "${DISK}${SEP}3" /persist && echo "OK" || echo "FAIL"
+}
+
+stop() {
+	umount /persist 2>/dev/null
+	umount /boot 2>/dev/null
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+	stop
+	start
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?

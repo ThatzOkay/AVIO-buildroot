@@ -8,7 +8,7 @@ TMP=$(mktemp -d)
 BOARD_DIR="$(dirname "$0")"
 
 LATEST=$(curl -s https://api.github.com/repos/ThatzOkay/AVIO/releases \
-  | jq -r '.[0].assets[] | select(.name | endswith(".deb") and contains("amd64")) | .browser_download_url')
+  | jq -r '.[0].assets[] | select(.name | endswith(".deb") and contains("amd64") and contains("buildroot")) | .browser_download_url')
 
 curl -L -o "$TMP/avio.deb" "$LATEST"
 
@@ -24,6 +24,15 @@ cp -r usr/lib/avio "$1/usr/lib/"
 [ -d usr/share/icons ] && cp -r usr/share/icons "$1/usr/share/"
 
 rm -rf "$TMP"
+
+# The prebuilt avio binary was linked against librtlsdr's SONAME major
+# version 2, but the librtlsdr commit Buildroot's package pins (in the
+# buildroot/ submodule, not ours to patch) only produces .so.0 --
+# confirmed on a live image that the library is otherwise ABI-compatible
+# (avio resolves and loads every symbol against it fine), so just add
+# the missing SONAME symlink rather than bumping/patching the package.
+RTLSDR_SO=$(basename "$(readlink -f "$1/usr/lib/librtlsdr.so.0")")
+ln -sf "$RTLSDR_SO" "$1/usr/lib/librtlsdr.so.2"
 
 # Wire up GRUB for both BIOS and EFI boot: the EFI core image reads its
 # grub.cfg from the ESP itself, the BIOS core image reads its grub.cfg

@@ -19,7 +19,7 @@ image persist.ext4 {
 }
 
 
-image sdcard.img {
+image avio.img {
 	hdimage {
 	}
 

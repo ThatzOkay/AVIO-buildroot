@@ -8,7 +8,7 @@ TMP=$(mktemp -d)
 ROOT_DIR="$(pwd)"
 
 LATEST=$(curl -s https://api.github.com/repos/ThatzOkay/AVIO/releases \
-  | jq -r '.[0].assets[] | select(.name | endswith(".deb") and contains("arm64")) | .browser_download_url')
+  | jq -r '.[0].assets[] | select(.name | endswith(".deb") and contains("arm64") and contains("buildroot")) | .browser_download_url')
 
 curl -L -o "$TMP/avio.deb" "$LATEST"
 
