@@ -24,7 +24,12 @@ jobs:
   build-and-publish:
     needs: ensure-release
     runs-on: ubuntu-latest
-    timeout-minutes: 330
+    # GitHub-hosted runners hard-cap a job at 360 minutes (6h) regardless of
+    # this setting - 358 leaves the most headroom possible under that ceiling
+    # without exceeding it. generic-x86_64 (with the LLVM prebuild restored,
+    # see build-llvm-prebuilt.sh) was observed reaching 90% of WebKitGTK's
+    # own build at the old 330-minute mark, so this should be enough.
+    timeout-minutes: 358
     strategy:
       fail-fast: false
       matrix:
